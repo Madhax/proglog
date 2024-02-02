@@ -15,10 +15,12 @@ type Record struct {
 	Offset uint64 `json:"offset"`
 }
 
+// Creates a new Log
 func NewLog() *Log {
 	return &Log{}
 }
 
+// Locks mutext, appends record. Returns offset
 func (c *Log) Append(record Record) (uint64, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -27,6 +29,7 @@ func (c *Log) Append(record Record) (uint64, error) {
 	return record.Offset, nil
 }
 
+// Returns record indicated at particular offset
 func (c *Log) Read(offset uint64) (Record, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
