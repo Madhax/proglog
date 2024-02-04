@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"io"
 	"os"
 
@@ -64,9 +65,11 @@ func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
 	}
 	if in == -1 {
 		out = uint32((i.size / entWidth) - 1)
+		fmt.Fprintln(os.Stdout, i.size, entWidth)
 	} else {
 		out = uint32(in)
 	}
+
 	pos = uint64(out) * entWidth
 	if i.size < pos+entWidth {
 		return 0, 0, io.EOF

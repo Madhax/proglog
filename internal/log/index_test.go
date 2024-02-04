@@ -48,7 +48,21 @@ func TestIndex(t *testing.T) {
 	f, _ = os.OpenFile(f.Name(), os.O_RDWR, 0600)
 	idx, err = newIndex(f, c)
 	require.NoError(t, err)
-	off, pos, err := idx.Read(-1)
+
+	// First entry
+	off, pos, err := idx.Read(0)
+	require.NoError(t, err)
+	require.Equal(t, uint32(0), off)
+	require.Equal(t, entries[0].Pos, pos)
+
+	// Second entry
+	off, pos, err = idx.Read(1)
+	require.NoError(t, err)
+	require.Equal(t, uint32(1), off)
+	require.Equal(t, entries[1].Pos, pos)
+
+	// Last entry
+	off, pos, err = idx.Read(-1)
 	require.NoError(t, err)
 	require.Equal(t, uint32(1), off)
 	require.Equal(t, entries[1].Pos, pos)
