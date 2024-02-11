@@ -30,12 +30,14 @@ func newIndex(f *os.File, c Config) (*index, error) {
 		return nil, err
 	}
 	idx.size = uint64(fi.Size())
-
+	fmt.Fprintln(os.Stdout, "newIndex", idx.size)
+	//problematic function. Sets file pointer via SetEndOfFile regardless of total written. Needs to be refactored out
 	if err = os.Truncate(
 		f.Name(), int64(c.Segment.MaxIndexBytes),
 	); err != nil {
 		return nil, err
 	}
+	//fmt.Fprintln(os.Stdout, "newIndex", idx.size)
 	if idx.mmap, err = gommap.Map(
 		idx.file.Fd(),
 		gommap.PROT_READ|gommap.PROT_WRITE,
@@ -85,7 +87,12 @@ func (i *index) Write(off uint32, pos uint64) error {
 	}
 	enc.PutUint32(i.mmap[i.size:i.size+offWidth], off)
 	enc.PutUint64(i.mmap[i.size+offWidth:i.size+entWidth], pos)
+
+	fmt.Fprintln(os.Stdout, "Write before increase", i.size, entWidth)
+
 	i.size += uint64(entWidth)
+	fmt.Fprintln(os.Stdout, "Write after increase", i.size, entWidth)
+
 	return nil
 }
 
