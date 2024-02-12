@@ -55,9 +55,12 @@ func (i *index) Close() error {
 		fmt.Fprintln(os.Stdout, "Close Map Sync", err)
 		return err
 	}
-	i.mmap.UnsafeUnmap()
 	if err := i.file.Sync(); err != nil {
 		fmt.Fprintln(os.Stdout, "Close File Sync", err)
+		return err
+	}
+	if err := i.mmap.UnsafeUnmap(); err != nil {
+		fmt.Fprintln(os.Stdout, "UnsafeUnmap", err)
 		return err
 	}
 	if err := i.file.Truncate(int64(i.size)); err != nil {

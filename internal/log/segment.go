@@ -111,14 +111,17 @@ func (s *segment) IsMaxed() bool {
 // Remove closes the segment and removes the index and store files
 func (s *segment) Remove() error {
 	if err := s.Close(); err != nil {
+		fmt.Fprintln(os.Stdout, "Remove Close", err)
 		return err
 	}
 
 	if err := os.Remove(s.index.Name()); err != nil {
+		fmt.Fprintln(os.Stdout, "Remove Index", err)
 		return err
 	}
 
 	if err := os.Remove(s.store.Name()); err != nil {
+		fmt.Fprintln(os.Stdout, "Remove Store", err)
 		return err
 	}
 
@@ -127,6 +130,7 @@ func (s *segment) Remove() error {
 
 func (s *segment) Close() error {
 	if err := s.index.Close(); err != nil {
+		fmt.Fprintln(os.Stdout, "Close Close Index", err)
 		return err
 	}
 
