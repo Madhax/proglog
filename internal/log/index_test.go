@@ -1,7 +1,6 @@
 package log
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"testing"
@@ -11,11 +10,10 @@ import (
 
 func TestIndex(t *testing.T) {
 	f, err := os.CreateTemp(os.TempDir(), "index_test")
-	//f, err := ioutil.TempFile(os.TempDir(), "index_test")
 	require.NoError(t, err)
 	defer os.Remove(f.Name())
 	c := Config{}
-	c.Segment.MaxIndexBytes = 24
+	c.Segment.MaxIndexBytes = 1024
 	idx, err := newIndex(f, c)
 	require.NoError(t, err)
 
@@ -30,7 +28,6 @@ func TestIndex(t *testing.T) {
 		{Off: 0, Pos: 0},
 		{Off: 1, Pos: 10},
 	}
-	fmt.Fprintln(os.Stdout, "idx.size", idx.size)
 	for _, want := range entries {
 		err = idx.Write(want.Off, want.Pos)
 		require.NoError(t, err)
@@ -39,16 +36,16 @@ func TestIndex(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, want.Pos, pos)
 	}
-	fmt.Fprintln(os.Stdout, "idx.size", idx.size)
 	// index and scanner should error when reading past existing entries
 
 	_, _, err = idx.Read(int64(len(entries)))
 	require.Equal(t, io.EOF, err)
-	_ = idx.Close()
+	err = idx.Close()
+	require.NoError(t, err)
 	// index should build its state from the existing file
-	f, _ = os.OpenFile(f.Name(), os.O_RDWR, 0600)
+	f, err = os.OpenFile(f.Name(), os.O_RDWR, 0600)
+	require.NoError(t, err)
 	idx, err = newIndex(f, c)
-	fmt.Fprintln(os.Stdout, "idx.size", idx.size)
 
 	require.NoError(t, err)
 

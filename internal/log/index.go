@@ -27,22 +27,24 @@ func newIndex(f *os.File, c Config) (*index, error) {
 
 	fi, err := os.Stat(f.Name())
 	if err != nil {
+		fmt.Fprintln(os.Stdout, "os.Stat error", err)
 		return nil, err
 	}
 	idx.size = uint64(fi.Size())
-	fmt.Fprintln(os.Stdout, "newIndex", idx.size)
-	//problematic function. Sets file pointer via SetEndOfFile regardless of total written. Needs to be refactored out
+
+	//expand file to max size on open
 	if err = os.Truncate(
 		f.Name(), int64(c.Segment.MaxIndexBytes),
 	); err != nil {
 		return nil, err
 	}
-	//fmt.Fprintln(os.Stdout, "newIndex", idx.size)
+
 	if idx.mmap, err = gommap.Map(
 		idx.file.Fd(),
 		gommap.PROT_READ|gommap.PROT_WRITE,
 		gommap.MAP_SHARED,
 	); err != nil {
+		fmt.Fprintln(os.Stdout, "Map error", err)
 		return nil, err
 	}
 	return idx, nil
@@ -50,12 +52,16 @@ func newIndex(f *os.File, c Config) (*index, error) {
 
 func (i *index) Close() error {
 	if err := i.mmap.Sync(gommap.MS_SYNC); err != nil {
+		fmt.Fprintln(os.Stdout, "Close Map Sync", err)
 		return err
 	}
+	i.mmap.UnsafeUnmap()
 	if err := i.file.Sync(); err != nil {
+		fmt.Fprintln(os.Stdout, "Close File Sync", err)
 		return err
 	}
 	if err := i.file.Truncate(int64(i.size)); err != nil {
+		fmt.Fprintln(os.Stdout, "Close Truncate", err)
 		return err
 	}
 	return i.file.Close()
@@ -67,7 +73,6 @@ func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
 	}
 	if in == -1 {
 		out = uint32((i.size / entWidth) - 1)
-		fmt.Fprintln(os.Stdout, i.size, entWidth)
 	} else {
 		out = uint32(in)
 	}
@@ -88,10 +93,7 @@ func (i *index) Write(off uint32, pos uint64) error {
 	enc.PutUint32(i.mmap[i.size:i.size+offWidth], off)
 	enc.PutUint64(i.mmap[i.size+offWidth:i.size+entWidth], pos)
 
-	fmt.Fprintln(os.Stdout, "Write before increase", i.size, entWidth)
-
 	i.size += uint64(entWidth)
-	fmt.Fprintln(os.Stdout, "Write after increase", i.size, entWidth)
 
 	return nil
 }
