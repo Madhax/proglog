@@ -3,6 +3,7 @@ package log
 import (
 	"os"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -46,6 +47,22 @@ func (l *Log) setup() error {
 		off, _ := strconv.ParseUint(offStr, 10, 0)
 		baseOffsets = append(baseOffsets, off)
 	}
-	//TODO
+	sort.Slice(baseOffsets, func(i, j int) bool {
+		return baseOffsets[i] < baseOffsets[j]
+	})
+	for i := 0; i < len(baseOffsets); i++ {
+		if err = l.newSegment(baseOffsets[i]); err != nil {
+			return err
+		}
+		// baseOffset contains dup for index and store so we skip the dup
+		i++
+	}
+	if l.segments == nil {
+		if err = l.newSegment(
+			l.Config.Segment.InitialOffset,
+		); err != nil {
+			return err
+		}
+	}
 	return nil
 }
