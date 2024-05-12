@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/go-delve/delve/service/api"
+	api "github.com/madhax/proglog/api/v1"
 )
 
 type Log struct {
@@ -194,4 +194,16 @@ func (o *originReader) Read(p []byte) (int, error) {
 	n, err := o.ReadAt(p, o.off)
 	o.off += int64(n)
 	return n, err
+}
+
+func (l *Log) newSegment(off uint64) error {
+	s, err := newSegment(l.Dir, off, l.Config)
+
+	if err != nil {
+		return err
+	}
+
+	l.segments = append(l.segments, s)
+	l.activeSegment = s
+	return nil
 }
