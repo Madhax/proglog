@@ -12,6 +12,17 @@ func TestLog(t *testing.T) {
 		"reader:":                           testReader,
 		"truncate":                          testTruncate,
 	} {
+		t.Run(scenario, func(t *testing.T)) {
+			dir, err := ioutil.TempDir("", "store-test")
+			require.noError(t, err)
+			defer os.RemoveAll(dir)
 
+			c := Config{}
+			c.Segment.MaxStoreBytes = 32
+			log, err := NewLog(dir, c)
+			require.NoError(t, err)
+
+			fn(t, log)
+		}
 	}
 }
